@@ -53,7 +53,7 @@ sensor_fields = [
         ('air_humidity', to_str),  # TODO: change to_float.
         ('air_temp', to_str),  # TODO: change to_float.
         ('water_temp', to_float),
-        ('pH', to_str),  # TODO: change to_float.
+        ('pH', to_float),
 
         # Field values: 0, 1 (some setups have less than 4 lights, so 'x' is
         # used as ignore or not applicable.
