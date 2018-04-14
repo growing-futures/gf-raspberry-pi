@@ -34,8 +34,8 @@ class LightStatus(Enum):
 
 def to_float(s):
     try:
-        return s
-    except:
+        return float(s)
+    except ValueError:
         # TODO
         return s
 
@@ -50,10 +50,10 @@ def to_light_status(light_data):
 
 sensor_fields = [
         ('water_level', to_float),
-        ('air_humidity', to_str),  # TODO: change to_float later.
+        ('air_humidity', to_str),  # TODO: change to_float.
         ('air_temp', to_float),
         ('water_temp', to_float),
-        ('pH', to_float),
+        ('pH', to_str),  # TODO: change to_float.
 
         # Field values: 0, 1 (some setups have less than 4 lights, so 'x' is
         # used as ignore or not applicable.
@@ -79,18 +79,6 @@ def to_dict(sensor_data):
     d['tags'] = tags
 
     d['fields'] = {s:func(sensor_data[e]) for e,(s,func) in enumerate(sensor_fields)}
-    #fields = {}
-    #fields['water_level']   = sensor_data[0]
-    #fields['air_humidity']  = sensor_data[1]
-    #fields['air_temp']      = sensor_data[2]
-    #fields['water_temp']    = sensor_data[3]
-    #fields['pH']            = sensor_data[4]
-    #fields['light_status0'] = sensor_data[5]
-    #fields['light_status1'] = sensor_data[6]
-    #fields['light_status2'] = sensor_data[7]
-    #fields['light_status3'] = sensor_data[8]
-    #d['fields'] = fields
-
     return d
 
 
