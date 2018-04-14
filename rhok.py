@@ -50,17 +50,17 @@ def to_light_status(light_data):
 
 sensor_fields = [
         ('water_level', to_float),
-        ('air_humidity', to_str),  # TODO: change to_float.
-        ('air_temp', to_str),  # TODO: change to_float.
+        ('air_humidity', to_float),
+        ('air_temp', to_float),
         ('water_temp', to_float),
         ('pH', to_float),
 
         # Field values: 0, 1 (some setups have less than 4 lights, so 'x' is
         # used as ignore or not applicable.
-        ('light_status0', to_light_status),
-        ('light_status1', to_light_status),
-        ('light_status2', to_light_status),
-        ('light_status3', to_light_status),
+        ('light_status_0', to_light_status),
+        ('light_status_1', to_light_status),
+        ('light_status_2', to_light_status),
+        ('light_status_3', to_light_status),
 ]
 
 sensor_fields_len = len(sensor_fields)
@@ -77,8 +77,15 @@ def to_dict(sensor_data):
     tags['towerName'] = 'Tower_{}'.format(tower_name)
     tags['towerGroup'] = 'Tower_Group_{}'.format(tower_group)
     d['tags'] = tags
+    fields = []
 
-    d['fields'] = {s:func(sensor_data[e]) for e,(s,func) in enumerate(sensor_fields)}
+    for e, (field, func) in enumerate(sensor_fields):
+        # We ignore 'x' fields. The arduino is sending 4 light statuses even
+        # if they only have 1 light. We filter out any that don't have data.
+        if 'x' == s: continue
+        fields[field] = func(sensor_data[e])
+
+    d['fields'] = fields
     return d
 
 
