@@ -1,29 +1,29 @@
+#!/usr/bin/env python
 from influxdb import InfluxDBClient
+import json
 
 hostName = '34.234.172.6'
 hostPort = 8086
-dbname = 'testdb'
+dbname = 'gf'
 
 
-client = InfluxDBClient(host=hostName, port=hostPort)
+client = InfluxDBClient(host=hostName, port=hostPort, username='gfsensor', password='rhokmonitoring')
 
-jsonBody = """[
+jsonBody = json.loads("""[
 	{
-		"measurements": "TowerData",
+		"measurement": "TowerData",
 		"tags": {
 			"towerName": "myTestTower",
 			"towerGroup": "myTestGroup"
 		},
 
 		"fields": {
-			"water_level": 0.0,
-			"pH": 0.0,
+			"water_level": 10.0,
+			"pH": 5.6,
 			"light_sensor": "off"
 		}
 	}
-]"""
-
-client.create_database(dbname)
+]""")
 
 client.switch_database(dbname)
 
