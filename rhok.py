@@ -77,7 +77,7 @@ def to_dict(sensor_data):
     tags['towerName'] = 'Tower_{}'.format(tower_name)
     tags['towerGroup'] = 'Tower_Group_{}'.format(tower_group)
     d['tags'] = tags
-    fields = []
+    fields = {}
 
     for e, (field, func) in enumerate(sensor_fields):
         # We ignore 'x' fields. The arduino is sending 4 light statuses even
