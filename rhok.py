@@ -57,12 +57,13 @@ sensor_fields = [
         ('water_temp', to_float),
         ('pH', to_float),
 
-        # Field values: 0, 1 (some setups have less than 4 lights, so 'x' is
-        # used as ignore or not applicable.
-        ('light_status_0', to_light_status),
+        # Field values: 0, 1, 'x'.
+        # Some setups have less than 4 lights, so 'x' is used as ignore
+        # or not applicable.
         ('light_status_1', to_light_status),
         ('light_status_2', to_light_status),
         ('light_status_3', to_light_status),
+        ('light_status_4', to_light_status),
 ]
 
 sensor_fields_len = len(sensor_fields)
