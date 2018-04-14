@@ -1,4 +1,5 @@
 #import logging
+from enum import Enum, unique
 from influxdb import InfluxDBClient
 import json
 #from sensor import sensor_fields
@@ -13,22 +14,53 @@ dbname = 'gf'
 
 # TODO - hardcoded for now
 tower_name = 30
+tower_group = tower_name % 10 + 1
 
 
-sensor_source = ["measurement", "tags", "fields"]
+#sensor_source = ["measurement", "tags", "fields"]
+#
+#sensor_tags = [
+#        "towerName",
+#        "towerGroup"
+#]
+#
 
-sensor_tags = [
-        "towerName",
-        "towerGroup"
-]
+class LightStatus(Enum):
+    on  = 1
+    off = 2
+    on_expected  = 3  # light is off, but it should be on
+    off_expected = 4  # light is on, but it should be off
+
+
+def to_float(s):
+    try:
+        return s
+    except:
+        # TODO
+        return s
+
+def to_str(s):
+    return s
+
+def to_light_status(light_data):
+    # TODO - convert to enum
+    if 1 == light_data: return LightStatus.on.value
+    return LightStatus.off.value
+
 
 sensor_fields = [
-        "water_level",
-        "air_humidity",
-        "air_temp",
-        "water_temp",
-        "light_status",
-        "pH"
+        ('water_level', to_float),
+        ('air_humidity', to_str),  # TODO: change to_float later.
+        ('air_temp', to_float),
+        ('water_temp', to_float),
+        ('pH', to_float),
+
+        # Field values: 0, 1 (some setups have less than 4 lights, so 'x' is
+        # used as ignore or not applicable.
+        ('light_status0', to_light_status),
+        ('light_status1', to_light_status),
+        ('light_status2', to_light_status),
+        ('light_status3', to_light_status),
 ]
 
 sensor_fields_len = len(sensor_fields)
@@ -41,16 +73,26 @@ def to_dict(sensor_data):
     d = {}
     d['measurement'] = 'TowerData'
 
-    d['tags'] = {}
-    d['tags']['towerName'] = "Tower_%s" % tower_name
-    d['tags']['towerGroup'] = "Tower_Group_%s" % (tower_name % 10 + 1)
+    tags = {}
+    tags['towerName'] = 'Tower_{}'.format(tower_name)
+    tags['towerGroup'] = 'Tower_Group_{}'.format(tower_group)
+    d['tags'] = tags
 
-    d['fields'] = {f:sensor_data[e] for e,f in enumerate(sensor_fields)}
+    d['fields'] = {s:func(sensor_data[e]) for e,s,func in enumerate(sensor_fields)}
+    #fields = {}
 
-    #d['fields'] = {}
-    #d['fields']['water_level'] = float(random.choice(water_level_num))
-    #d['fields']['pH'] = float(random.choice(pH))
-    #d['fields']['light_sensor'] = random.choice(["off", "on"])
+    #fields['water_level']   = sensor_data[0]
+    #fields['air_humidity']  = sensor_data[1]
+    #fields['air_temp']      = sensor_data[2]
+    #fields['water_temp']    = sensor_data[3]
+    #fields['pH']            = sensor_data[4]
+    #fields['light_status0'] = sensor_data[5]
+    #fields['light_status1'] = sensor_data[6]
+    #fields['light_status2'] = sensor_data[7]
+    #fields['light_status3'] = sensor_data[8]
+
+    #d['fields'] = fields
+
     return d
 
 
