@@ -25,6 +25,7 @@ tower_group = "Tower 60 Postal Office"
 #]
 #
 
+@unique
 class LightStatus(Enum):
     on  = 1
     off = 2
@@ -44,8 +45,9 @@ def to_str(s):
 
 def to_light_status(light_data):
     # TODO - convert to enum
-    if 1 == light_data: return LightStatus.on.value
-    return LightStatus.off.value
+    if 1 == light_data: status = LightStatus.on
+    else: status =  LightStatus.off
+    return to_float(status.value)
 
 
 sensor_fields = [
