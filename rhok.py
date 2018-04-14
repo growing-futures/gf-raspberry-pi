@@ -7,7 +7,7 @@ import serial  # For communication with arduino.
 import time
 
 
-hostName = '34.234.172.6'
+hostName = 'growingfuturesapp.ca'
 hostPort = 8086
 dbname = 'gf'
 
@@ -101,7 +101,8 @@ def main():
     # ls /dev/tty*
     ser = serial.Serial('/dev/ttyACM1', 9600)
     client = InfluxDBClient(host=hostName, port=hostPort, username='gfsensor',
-            password='rhokmonitoring')
+            password='rhokmonitoring', ssl=True)
+    client.switch_database(dbname)
 
     #sensor_dict = {f:0.0 for f in sensor_fields}
 
