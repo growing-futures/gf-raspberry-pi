@@ -11,6 +11,10 @@ hostPort = 8086
 dbname = 'gf'
 
 
+# TODO - hardcoded for now
+tower_name = 'rhok'
+
+
 sensor_source = ["measurement", "tags", "fields"]
 
 sensor_tags = [
