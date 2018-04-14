@@ -82,8 +82,9 @@ def to_dict(sensor_data):
     for e, (field, func) in enumerate(sensor_fields):
         # We ignore 'x' fields. The arduino is sending 4 light statuses even
         # if they only have 1 light. We filter out any that don't have data.
-        if 'x' == s: continue
-        fields[field] = func(sensor_data[e])
+        data = sensor_data[e]
+        if 'x' == data: continue
+        fields[field] = func(data)
 
     d['fields'] = fields
     return d
