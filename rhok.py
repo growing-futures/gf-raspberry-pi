@@ -97,7 +97,7 @@ def main():
     # ls /dev/tty*
     ser = serial.Serial('/dev/ttyACM1', 9600)
     client = InfluxDBClient(host=hostName, port=hostPort, username='gfsensor',
-            password='rhokmonitoring', ssl=True)
+            password='rhokmonitoring', ssl=True, verify_ssl=True)
     client.switch_database(dbname)
 
     #sensor_dict = {f:0.0 for f in sensor_fields}
