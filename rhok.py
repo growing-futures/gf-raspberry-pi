@@ -13,8 +13,8 @@ dbname = 'gf'
 
 
 # TODO - hardcoded for now
-tower_name = 30
-tower_group = tower_name % 10 + 1
+tower_name = 60
+tower_group = "Tower 60 Postal Office"
 
 
 #sensor_source = ["measurement", "tags", "fields"]
