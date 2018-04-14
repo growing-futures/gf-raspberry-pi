@@ -12,7 +12,7 @@ dbname = 'gf'
 
 
 # TODO - hardcoded for now
-tower_name = 'rhok'
+tower_name = 30
 
 
 sensor_source = ["measurement", "tags", "fields"]
