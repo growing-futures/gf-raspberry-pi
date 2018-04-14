@@ -4,12 +4,13 @@ import json
 import random
 import time
 
-hostName = '34.234.172.6'
+hostName = 'growingfuturesapp.ca'
 hostPort = 8086
 dbname = 'gf'
 
 
-client = InfluxDBClient(host=hostName, port=hostPort, username='gfsensor', password='rhokmonitoring')
+client = InfluxDBClient(host=hostName, port=hostPort, username='gfsensor', password='rhokmonitoring', ssl=True)
+#client = InfluxDBClient(host=hostName, port=hostPort, username='gfsensor', password='rhokmonitoring')
 
 json_string = """[
     {"measurement": "TowerData",
@@ -37,9 +38,8 @@ light_sensor = "off";
 client.switch_database(dbname)
 
 while True:
-    time.sleep(0.2)
+    time.sleep(0.02)
     tower_name = random.choice(tower_name_num)
-    new_string = json_string % (tower_name, (tower_name % 10 + 1), random.choice(water_level_num), random.choice(pH), random.choice(["off", "on"]))
 
     d = {}
     d['measurement'] = 'TowerData'
@@ -49,7 +49,8 @@ while True:
     d['fields'] = {}
     d['fields']['water_level'] = float(random.choice(water_level_num))
     d['fields']['pH'] = float(random.choice(pH))
-    d['fields']['light_sensor'] = random.choice(["off", "on"]) 
+    d['fields']['light_sensor'] = random.choice([0, 1, 2, 3]) 
+    d['fields']['flow_status'] = float(random.choice(range(0,11)))
 
     if client.write_points([d]):
         print "Insert success"
