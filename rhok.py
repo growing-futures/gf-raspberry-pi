@@ -51,7 +51,7 @@ def to_light_status(light_data):
 sensor_fields = [
         ('water_level', to_float),
         ('air_humidity', to_str),  # TODO: change to_float.
-        ('air_temp', to_float),
+        ('air_temp', to_str),  # TODO: change to_float.
         ('water_temp', to_float),
         ('pH', to_str),  # TODO: change to_float.
 
