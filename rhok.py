@@ -11,25 +11,6 @@ hostPort = 8086
 dbname = 'gf'
 
 
-json_sensor_string = '
-{
-    "measurement": "TowerData",
-
-    "tags": {
-            "towerName": "Tower_%s",
-            "towerGroup": "Tower_Group_%s"
-    },
-
-    "fields": {
-            "water_level": %s,
-            "air_humidity": %s,
-            "air_temp": %s,
-            "water_temp": %s,
-            "light_status" : "%s",
-            "pH": %s
-    }
-}'
-
 sensor_source = ["measurement", "tags", "fields"]
 
 sensor_tags = [
