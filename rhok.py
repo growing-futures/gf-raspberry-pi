@@ -79,7 +79,7 @@ def main():
         sensor_data = sensor_data.decode('utf-8').strip().split(',')
         print(sensor_data)
 
-        if len(sensor_fields) != sensor_fields_len:
+        if len(sensor_data) != sensor_fields_len:
             # TODO - error - drop data?
             continue
 
