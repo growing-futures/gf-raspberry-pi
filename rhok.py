@@ -78,9 +78,8 @@ def to_dict(sensor_data):
     tags['towerGroup'] = 'Tower_Group_{}'.format(tower_group)
     d['tags'] = tags
 
-    d['fields'] = {s:func(sensor_data[e]) for e,s,func in enumerate(sensor_fields)}
+    d['fields'] = {s:func(sensor_data[e]) for e,(s,func) in enumerate(sensor_fields)}
     #fields = {}
-
     #fields['water_level']   = sensor_data[0]
     #fields['air_humidity']  = sensor_data[1]
     #fields['air_temp']      = sensor_data[2]
@@ -90,7 +89,6 @@ def to_dict(sensor_data):
     #fields['light_status1'] = sensor_data[6]
     #fields['light_status2'] = sensor_data[7]
     #fields['light_status3'] = sensor_data[8]
-
     #d['fields'] = fields
 
     return d
@@ -123,6 +121,9 @@ def main():
 
         if len(sensor_data) != sensor_fields_len:
             # TODO - error - drop data?
+            print('WARNING: Sensor data length mismatch (ignoring sensor '
+                    'data), received {} values, expecting {} values'.format(
+                    len(sensor_data), sensor_fields_len))
             continue
 
         # Add timestamp.
