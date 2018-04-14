@@ -10,7 +10,7 @@ def main_loop():
     # be a bunch of tty devices. It is usually something like ttyACM0. The last
     # number is dependant on the usb port being used.
     # ls /dev/tty*
-    ser = serial.Serial('/dev/ttyACM0', 9600)
+    ser = serial.Serial('/dev/ttyACM1', 9600)
 
     while True:
         try:
