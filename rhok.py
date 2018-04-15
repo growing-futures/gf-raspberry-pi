@@ -1,6 +1,6 @@
-#import logging
 from datetime import datetime, time
 from enum import Enum, unique
+#import logging  # TODO
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 import json
@@ -9,6 +9,13 @@ import time
 
 
 CONFIG_FILENAME = 'config.json'
+
+
+DB = 'db'
+DB_HOST_NAME = "host_name"
+DB_HOST_PORT = "host_port"
+DB_DBNAME = "dbname"
+DB_USERNAME = "username"
 
 
 FIELDS = 'fields'
@@ -40,14 +47,30 @@ ARDUINO_INVALID_DATA = 'x'
 
 ARDUINO = 'arduino'
 SERIAL_PORT = '/dev/ttyACM1'
+#SERIAL_PORT = '/dev/ttyACM0'
 #SERIAL_PORT = '/dev/ttyUSB0'
 BAUD_RATE = 'baud_rate'
 
 
 MEASUREMENT = 'measurement'
 TAGS = 'tags'
-DB = 'db'
 CONFIG_KEYS = (MEASUREMENT, TAGS, DB, ARDUINO, WATER_LEVEL, LIGHT_SENSOR)
+
+
+# Required as the arduino sends us the data in this order.
+FIELD_ORDER = (
+        F_WATER_LEVEL,
+        F_AIR_HUMIDITY,
+        F_AIR_TEMP,
+        F_WATER_TEMP,
+        F_PH,
+        F_LIGHT_STATUS_1,
+        F_LIGHT_STATUS_2,
+        F_LIGHT_STATUS_3,
+        F_LIGHT_STATUS_4,
+)
+
+FIELDS_LEN = len(FIELD_ORDER)
 
 
 @unique
@@ -107,22 +130,6 @@ def create_to_water_level(config_data):
     return to_water_level
 
 
-# Required as the arduino sends us the data in this order.
-FIELD_ORDER = (
-        F_WATER_LEVEL,
-        F_AIR_HUMIDITY,
-        F_AIR_TEMP,
-        F_WATER_TEMP,
-        F_PH,
-        F_LIGHT_STATUS_1,
-        F_LIGHT_STATUS_2,
-        F_LIGHT_STATUS_3,
-        F_LIGHT_STATUS_4,
-)
-
-FIELDS_LEN = len(FIELD_ORDER)
-
-
 def to_dict(config_data, field_dict, sensor_data):
     """Used to convert the sensor data into a dict for easy conversion to
     json format.
@@ -179,10 +186,11 @@ def main():
 
     try:
         # TODO - remove password
-        client = InfluxDBClient(host=host_name, port=host_port,
-                username='gfsensor', password='rhokmonitoring', ssl=True,
+        db = config_data[DB]
+        client = InfluxDBClient(host=db[DB_HOST_NAME], port=db[DB_HOST_PORT],
+                username=db[DB_USERNAME], password='rhokmonitoring', ssl=True,
                 verify_ssl=True)
-        client.switch_database(dbname)
+        client.switch_database(db[DB_DBNAME])
     except InfluxDBClientError as e:
         # TODO
         print('Exception: {}'.format(e))
