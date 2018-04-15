@@ -1,3 +1,6 @@
+# Currently all our code is in one file for easy of updating. In the future
+# it would be nice to have this split over separate files.
+
 from datetime import datetime, time
 from enum import Enum, unique
 from influxdb import InfluxDBClient
@@ -218,6 +221,7 @@ def get_config_data(filename):
             config_data = json.load(fp)
     except OSError as e:
         #print('Exception: {}'.format(e))
+        print('ERROR: Unable to read config file: {}'.format(CONFIG_FILENAME))
         return {}
 
     # Do some basic checking.
@@ -227,33 +231,8 @@ def get_config_data(filename):
     return config_data
 
 
-def main():
-    # Read in the config data.
-    config_data = get_config_data(CONFIG_FILENAME)
-    print(config_data)
-    if not config_data:
-        print('ERROR: Unable to read config file: {}'.format(CONFIG_FILENAME))
-
-    try:
-        ser = serial.Serial(SERIAL_PORT, config_data[ARDUINO][A_BAUD_RATE])
-    except serial.SerialException as e:
-        # TODO
-        print('Exception: {}'.format(e))
-        return
-
-    try:
-        # TODO - remove password
-        db = config_data[DB]
-        client = InfluxDBClient(host=db[DB_HOST_NAME], port=db[DB_HOST_PORT],
-                username=db[DB_USERNAME], password='rhokmonitoring', ssl=True,
-                verify_ssl=True)
-        client.switch_database(db[DB_DBNAME])
-    except InfluxDBClientError as e:
-        # TODO
-        print('Exception: {}'.format(e))
-        return
-
-    field_dict = {
+def create_sensor_field_dict(config_data):
+    return {
             F_WATER_LEVEL : create_to_water_level(config_data),
             F_AIR_HUMIDITY : to_float,
             F_AIR_TEMP : to_float,
@@ -265,25 +244,67 @@ def main():
             F_LIGHT_STATUS_4 : create_to_water_level(config_data),
     }
 
+
+def config_adruino_serial_port(config_data):
+    try:
+        return serial.Serial(SERIAL_PORT, config_data[ARDUINO][A_BAUD_RATE])
+    except serial.SerialException as e:
+        print('Exception: {}'.format(e))
+        print('ERROR: Unable to configure adruino serial port: {}'.format(
+            SERIAL_PORT))
+        return None
+
+
+def config_db_client(config_data):
+    try:
+        # TODO - remove password
+        db = config_data[DB]
+        client = InfluxDBClient(host=db[DB_HOST_NAME], port=db[DB_HOST_PORT],
+                username=db[DB_USERNAME], password='rhokmonitoring', ssl=True,
+                verify_ssl=True)
+        client.switch_database(db[DB_DBNAME])
+        return client
+    except InfluxDBClientError as e:
+        print('Exception: {}'.format(e))
+        print('ERROR: Unable to configure influx db client: host={}, port={}, '
+            'username={}'.format(
+                db[DB_HOST_NAME], db[DB_HOST_PORT], db[DB_USERNAME]))
+        return None
+
+
+def sensor_loop():
+    """Does some initial config then loops forever reading the sensor data."""
+    config_data = get_config_data(CONFIG_FILENAME)
+    print(config_data)
+    if not config_data: return
+
+    field_dict = create_sensor_field_dict(config_data)
+
+    ser_adruino = config_adruino_serial_port(config_data)
+    if ser_adruino is None: return
+
+    db_client = config_db_client(config_data)
+    if db_client is None: return
+
     while True:
         try:
-            sensor_data = ser.readline()
+            sensor_data = ser_adruino.readline()
         except serial.SerialException as e:
-            # One reason this can occur is when the rpi is disconnected from the
-            # arduino.
-            # TODO
+            # One reason this can occur is when the rpi is disconnected from
+            # the arduino.
             print('Exception: {}'.format(e))
+            print('ERROR: Unable to read adruino serial port')
             break
 
-        # Convert byte array to a string.
+        # Convert byte array to a string. Common separated values.
         sensor_data = sensor_data.decode('utf-8').strip().split(',')
         #print(sensor_data)
 
         if len(sensor_data) != FIELDS_LEN:
-            # TODO - error - drop data?
+            # This can happen once in while, especially during the first few
+            # reads.
             print('WARNING: Sensor data length mismatch (ignoring sensor '
                     'data), received {} values, expecting {} values'.format(
-                    len(sensor_data), sensor_fields_len))
             continue
 
         # Output to json.
@@ -291,12 +312,17 @@ def main():
         print(json.dumps(d))
 
         try:
-            if not client.write_points(d):
-                print('Failed client data write: {}'.format(d))
+            if not db_client.write_points(d):
+                print('Failed db client data write: {}'.format(d))
         except InfluxDBClientError as e:
-            # TODO
             print('Exception: {}'.format(e))
+            print('ERROR: Unable to write data to client db, data={}'.format(d))
+
+
+def setup():
+    pass
 
 
 if '__main__' == __name__:
-    main()
+    setup()
+    sensor_loop()
