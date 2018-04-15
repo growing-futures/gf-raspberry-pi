@@ -1,22 +1,17 @@
 #import logging
+from datetime import datetime, time
 from enum import Enum, unique
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 import json
-#from sensor import sensor_fields
 import serial  # For communication with arduino.
 import time
 
 
-MEASUREMENT = 'measurement'
-TAGS = 'tags'
-DB = 'db'
-ARDUINO = 'arduino'
-CONFIG_KEYS = (MEASUREMENT, TAGS, DB, ARDUINO)
-#CONFIG_KEYS = (MEASUREMENT, TAGS, FIELDS, DB, ARDUINO)
+CONFIG_FILENAME = 'config.json'
+
 
 FIELDS = 'fields'
-
 F_WATER_LEVEL = "water_level"
 F_AIR_HUMIDITY = "air_humidity"
 F_AIR_TEMP = "air_temp"
@@ -28,11 +23,25 @@ F_LIGHT_STATUS_3 = "light_status_3"
 F_LIGHT_STATUS_4 = "light_status_4"
 
 
-
-WL = "water_level"
+WATER_LEVEL = 'water_level'
 WL_SENSOR_HEIGHT = "sensor_height"
 WL_MAX = "max_water_level"
 WL_MIN = "min_water_level"
+
+
+LIGHT_SENSOR = 'light_sensor'
+LS_EXPECTED_START_ON_HOUR = 'expected_start_on_hour'
+LS_EXPECTED_START_ON_MIN = "expected_start_on_min"
+LS_EXPECTED_START_OFF_HOUR = "expected_start_off_hour"
+LS_EXPECTED_START_OFF_MIN = "expected_start_off_min"
+ARDUINO_LIGHT_ON = 1
+
+
+MEASUREMENT = 'measurement'
+TAGS = 'tags'
+DB = 'db'
+ARDUINO = 'arduino'
+CONFIG_KEYS = (MEASUREMENT, TAGS, DB, ARDUINO, WATER_LEVEL, LIGHT_SENSOR)
 
 
 @unique
@@ -41,6 +50,15 @@ class LightStatus(Enum):
     off = 2
     on_expected  = 3  # light is off, but it should be on
     off_expected = 4  # light is on, but it should be off
+
+
+# Ref: https://stackoverflow.com/a/10748024
+def time_in_range(start, end, in_time):
+    """Return True if in_time is in the range [start, end]"""
+    if start <= end:
+        return start <= in_time <= end
+    else:
+        return start <= in_time or in_time <= end
 
 
 def to_float(s):
@@ -54,21 +72,32 @@ def to_float(s):
 def to_str(s): return s
 
 
-def to_light_status(light_data):
-    """Used to convert light sensor data to light status."""
-    # TODO - convert to enum
-    if 1 == light_data: status = LightStatus.on
-    else: status =  LightStatus.off
-    return to_float(status.value)
+def create_to_light_status(config_data):
+    ls_config = config_data[LIGHT_SENSOR]
+    start_time = time(ls_config[LS_EXPECTED_START_ON_HOUR],
+            ls_config[LS_EXPECTED_START_ON_MIN], 0)
+    end_time = time(ls_config[LS_EXPECTED_START_OFF_HOUR],
+            ls_config[LS_EXPECTED_START_OFF_MIN], 0)
+
+    def to_light_status(sensor_value, start_time=start_time, end_time=end_time):
+        """Used to convert light sensor data to light status."""
+        if time_in_range(start_time, end_time, datetime.time(datetime.now())):
+            if ARDUINO_LIGHT_ON == light_data: status = LightStatus.on
+            else: status =  LightStatus.off
+        else:
+            if ARDUINO_LIGHT_ON == light_data: status = LightStatus.off_expected
+            else: status =  LightStatus.on_expected
+
+        return to_float(status.value)
+    return to_light_status
 
 
 def create_to_water_level(config_data):
     """Used to create the 'to_water_level' func."""
-    wl_config = config_data[WL]
+    wl_config = config_data[WATER_LEVEL]
     def to_water_level(sensor_value, height=wl_config[WL_SENSOR_HEIGHT],
             wl_max=wl_config[WL_MAX], wl_min=wl_config[WL_MIN]):
         sensor_value = to_float(sensor_value)
-        print(height, wl_max, wl_min, sensor_value)
         return (height - sensor_value - wl_min / (wl_max - wl_min)) * 100
     return to_water_level
 
@@ -87,7 +116,6 @@ FIELD_ORDER = (
 )
 
 FIELDS_LEN = len(FIELD_ORDER)
-
 
 
 def to_dict(config_data, field_dict, sensor_data):
@@ -148,10 +176,10 @@ def main():
             F_AIR_TEMP : to_float,
             F_WATER_TEMP : to_float,
             F_PH : to_float,
-            F_LIGHT_STATUS_1 : to_light_status,
-            F_LIGHT_STATUS_2 : to_light_status,
-            F_LIGHT_STATUS_3 : to_light_status,
-            F_LIGHT_STATUS_4 : to_light_status,
+            F_LIGHT_STATUS_1 : create_to_water_level(config_data),
+            F_LIGHT_STATUS_2 : create_to_water_level(config_data),
+            F_LIGHT_STATUS_3 : create_to_water_level(config_data),
+            F_LIGHT_STATUS_4 : create_to_water_level(config_data),
     }
 
     while True:

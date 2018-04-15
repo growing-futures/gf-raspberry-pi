@@ -22,5 +22,12 @@
         "sensor_height" : 2.0,
         "max_water_level" : 1.0,
         "min_water_level" : 0.0
+    },
+
+    "light_sensor" : {
+        "expected_start_on_hour" : 6,
+        "expected_start_on_min" : 0,
+        "expected_start_off_hour" : 18,
+        "expected_start_off_min" : 0
     }
 }
