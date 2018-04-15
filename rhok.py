@@ -14,6 +14,13 @@
 # -library: InfluxDBClient - https://pypi.python.org/pypi/influxdb
 # -correct system time (for light's status)
 #
+# Usage:
+# Run the script. This can be used to change the configuration data and/or
+# loop on the sensor data.
+# >>> python3 rhok.py
+#
+# Used to skip the setup.
+# >>> python3 rhok.py --skip_setup
 
 
 from datetime import datetime, time
@@ -22,6 +29,7 @@ from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 import json
 import serial  # For communication with arduino.
+import sys
 import time
 
 
@@ -468,10 +476,19 @@ def sensor_loop():
             print('ERROR: Unable to write data to client db, data={}'.format(d))
 
 
-def main():
-    setup()
+def main(skip_setup):
+    if not skip_setup:
+        # Check to see if the user wants to enter config mode.
+        prompt = "Do you want to enter configuration mode? (y/Y): "
+        cmd_line_input = input(prompt)
+        if is_yes_reply(cmd_line_input):
+            setup()
     sensor_loop()
 
 
 if '__main__' == __name__:
-    main()
+    # TODO - add proper args support, ie: argparse
+    skip_setup = '--skip_setup' in sys.argv
+    main(skip_setup)
+
+
