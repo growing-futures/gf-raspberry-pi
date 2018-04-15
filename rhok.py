@@ -349,7 +349,7 @@ def validate_cmd_data(cmd_line_input, data):
 
 def display_config_summary_change(config_data, changed_config):
     if changed_config:
-        print('\nSummary of config changes:')
+        print('\nSummary of configuration changes:')
         for key in SETUP_KEYS:
             if key in changed_config:
                 for data_key in SETUP_KEYS_ORDER_DICT[key]:
@@ -398,17 +398,17 @@ def setup():
     #print(config_data)
     if changed_config:
         display_config_summary_change(config_data, changed_config)
-        cmd_line_input = input('\nSave config file changes? (y/Y): ')
+        cmd_line_input = input('\nSave configuration changes? (y/Y): ')
 
         if is_yes_reply(cmd_line_input):
             # TODO - update to proper config file
             #update_config_data(CONFIG_FILENAME, config_data)
             saved = update_config_data('test_config.json', config_data)
-            if saved: print('Config file changes SAVED.')
+            if saved: print('Configuration changes SAVED.')
         else:
-            print('Config file changes ABORTED.')
+            print('Configuration changes ABORTED.')
     else:
-        print('Config file unchanged.')
+        print('Configuration unchanged.')
 
 
 def sensor_loop():
