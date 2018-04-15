@@ -1,5 +1,5 @@
 # Random Hacks of Kindness - 2018 April 13-15
-# Project #1 – Growing Futures Hydroponic Monitoring System
+# Project #1 - Growing Futures Hydroponic Monitoring System
 # https://rhok.ca/events/rhok-8/
 #
 # This code is used to read data from an arduino, clean it up a bit and then
