@@ -451,6 +451,7 @@ def sensor_loop():
             # reads.
             print('WARNING: Sensor data length mismatch (ignoring sensor '
                     'data), received {} values, expecting {} values'.format(
+                    len(sensor_data), sensor_fields_len))
             continue
 
         # Output to json.
