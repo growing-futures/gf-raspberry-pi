@@ -1,5 +1,13 @@
+# Random Hacks of Kindness - 2018 April 13-15
+# Project #1 – Growing Futures Hydroponic Monitoring System
+# https://rhok.ca/events/rhok-8/
+#
+# This code is used to read data from an arduino, clean it up a bit and then
+# put it in a database.
+#
 # Currently all our code is in one file for easy of updating. In the future
 # it would be nice to have this split over separate files.
+
 
 from datetime import datetime, time
 from enum import Enum, unique
@@ -10,6 +18,8 @@ import serial  # For communication with arduino.
 import time
 
 
+# This is our default config file. Don't write to this. Read only.
+DFLT_CONFIG_FILENAME = 'default_config.json'
 CONFIG_FILENAME = 'config.json'
 
 # Use this cmd on the raspberry pi to get the dev name of the arduino. There
@@ -71,12 +81,28 @@ LS_EXPECTED_START_ON_MIN = "expected_start_on_min"
 LS_EXPECTED_START_OFF_HOUR = "expected_start_off_hour"
 LS_EXPECTED_START_OFF_MIN = "expected_start_off_min"
 
+LIGHT_SENSOR_ORDER = (
+        LS_EXPECTED_START_ON_HOUR,
+        LS_EXPECTED_START_ON_MIN,
+        LS_EXPECTED_START_OFF_HOUR,
+        LS_EXPECTED_START_OFF_MIN,
+)
+
 # Used with the light sensor code.
 ARDUINO_LIGHT_ON = 1
 ARDUINO_INVALID_DATA = 'x'
 
 
 CONFIG_KEYS = (MEASUREMENT, TAGS, DB, ARDUINO, WATER_LEVEL, LIGHT_SENSOR)
+SETUP_KEYS = (TAGS, DB, WATER_LEVEL, LIGHT_SENSOR)
+
+# This is used to keep the setup order consistant over each setup.
+SETUP_KEYS_ORDER_DICT = {
+        TAGS : TAGS_ORDER,
+        DB : DB_ORDER,
+        WATER_LEVEL : WATER_LEVEL_ORDER,
+        LIGHT_SENSOR : LIGHT_SENSOR_ORDER,
+}
 
 
 FIELDS = 'fields'
@@ -214,21 +240,45 @@ def to_dict(config_data, field_dict, sensor_data):
     return d
 
 
+def check_config_data_keys_sanity(config_data):
+    """Does very basic sanity on the config data keys."""
+    for key in CONFIG_KEYS:
+        if key not in config_data:
+            print('ERROR: Missing config file key "{}"'.format(key))
+            return False
+    return True
+
+
 def get_config_data(filename):
     """Used to read the json config data."""
     try:
         with open(filename) as fp:
             config_data = json.load(fp)
     except OSError as e:
-        #print('Exception: {}'.format(e))
-        print('ERROR: Unable to read config file: {}'.format(CONFIG_FILENAME))
+        print('Exception: {}'.format(e))
+        print('ERROR: Unable to read config file: {}'.format(filename))
         return {}
 
-    # Do some basic checking.
-    for key in CONFIG_KEYS:
-        if key not in config_data:
-            print('ERROR: Missing config.json key "{}"'.format(key))
-    return config_data
+    if check_config_data_keys_sanity(config_data): return config_data
+    else: return {}
+
+
+def update_config_data(filename, config_data):
+    """Used to overwrite the json config data."""
+    if not check_config_data_keys_sanity(config_data):
+        print('ERROR: Invalid config data={}, config file not updated'.format(
+            config_data))
+        return False
+
+    try:
+        with open(filename, 'w') as fp:
+            json.dump(config_data, fp, indent=4)
+            #print(json.dumps(config_data))
+    except OSError as e:
+        print('Exception: {}'.format(e))
+        print('ERROR: Unable to write config file: {}'.format(filename))
+        return False
+    return True
 
 
 def create_sensor_field_dict(config_data):
@@ -270,6 +320,95 @@ def config_db_client(config_data):
             'username={}'.format(
                 db[DB_HOST_NAME], db[DB_HOST_PORT], db[DB_USERNAME]))
         return None
+
+
+#
+# Functions to manage setup.
+#
+def validate_cmd_data(cmd_line_input, data):
+    expected_data_type = type(data)
+    value = None
+    cmd_line_input = cmd_line_input.strip()
+
+    if cmd_line_input:
+        if str != expected_data_type:
+            try:
+                value = expected_data_type(cmd_line_input)
+            except ValueError:
+                # Try again.
+                print('Invalid input (hint: {})'.format(
+                    expected_data_type.__name__))
+        else:
+            value = cmd_line_input
+    else:
+        # Empty string means keep things as they are.
+        value = data
+
+    return value
+
+
+def display_config_summary_change(config_data, changed_config):
+    if changed_config:
+        print('\nSummary of config changes:')
+        for key in SETUP_KEYS:
+            if key in changed_config:
+                for data_key in SETUP_KEYS_ORDER_DICT[key]:
+                    if data_key in changed_config[key]:
+                        print("    '{}':'{}' = {} (old={})".format(
+                            key, data_key, config_data[key][data_key],
+                            changed_config[key][data_key]))
+
+
+def is_yes_reply(cmd_line_input):
+    return 'y' == cmd_line_input.lower()
+
+
+def setup():
+    """Function to assist the user in configuring a device."""
+    config_data = get_config_data(CONFIG_FILENAME)
+    #print(config_data)
+    cmd_line = "Update configuration data for '{}' entries (y/Y):"
+    cmd_data_line = "'{}' = {}: "
+    help_str = "Input new value or press 'enter' to keep current value."
+
+    # TODO - have a way to allow the user to revert to the dflt config file.
+    # TODO - validate hour/min values
+    # TODO - hint to user that hour values are 24h
+    changed_config = {}
+
+    for key in SETUP_KEYS:
+        print()
+        cmd_line_input = input(cmd_line.format(key))
+
+        if is_yes_reply(cmd_line_input):
+            for data_key in SETUP_KEYS_ORDER_DICT[key]:
+                print(help_str)
+                data = config_data[key][data_key]
+                value = None
+
+                while value is None:
+                    value = validate_cmd_data(
+                            input(cmd_data_line.format(data_key, data)), data)
+
+                # Only update if it has changed.
+                if value != data:
+                    config_data[key][data_key] = value
+                    changed_config.setdefault(key, {})[data_key] = data
+
+    #print(config_data)
+    if changed_config:
+        display_config_summary_change(config_data, changed_config)
+        cmd_line_input = input('\nSave config file changes? (y/Y): ')
+
+        if is_yes_reply(cmd_line_input):
+            # TODO - update to proper config file
+            #update_config_data(CONFIG_FILENAME, config_data)
+            saved = update_config_data('test_config.json', config_data)
+            if saved: print('Config file changes SAVED.')
+        else:
+            print('Config file changes ABORTED.')
+    else:
+        print('Config file unchanged.')
 
 
 def sensor_loop():
@@ -317,10 +456,6 @@ def sensor_loop():
         except InfluxDBClientError as e:
             print('Exception: {}'.format(e))
             print('ERROR: Unable to write data to client db, data={}'.format(d))
-
-
-def setup():
-    pass
 
 
 if '__main__' == __name__:
