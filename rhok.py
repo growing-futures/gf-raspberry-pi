@@ -421,7 +421,7 @@ def setup():
 def sensor_loop():
     """Does some initial config then loops forever reading the sensor data."""
     config_data = get_config_data(CONFIG_FILENAME)
-    print(config_data)
+    #print(config_data)
     if not config_data: return
 
     field_dict = create_sensor_field_dict(config_data)
@@ -456,10 +456,12 @@ def sensor_loop():
 
         # Output to json.
         d = [to_dict(config_data, field_dict, sensor_data)]
-        print(json.dumps(d))
+        #print(json.dumps(d))
 
         try:
-            if not db_client.write_points(d):
+            if db_client.write_points(d):
+                print('DB updated with data: {}'.format(d))
+            else:
                 print('Failed db client data write: {}'.format(d))
         except InfluxDBClientError as e:
             print('Exception: {}'.format(e))
