@@ -453,9 +453,7 @@ def setup():
         cmd_line_input = input('\nSave configuration changes? (y/Y): ')
 
         if is_yes_reply(cmd_line_input):
-            # TODO - update to proper config file
-            #update_config_data(CONFIG_FILENAME, config_data)
-            saved = update_config_data('test_config.json', config_data)
+            saved = update_config_data(CONFIG_FILENAME, config_data)
             if saved: print('Configuration changes SAVED.')
         else:
             print('Configuration changes ABORTED.')
