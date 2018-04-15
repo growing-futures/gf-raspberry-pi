@@ -1,3 +1,4 @@
+##########################################################################
 # Random Hacks of Kindness - 2018 April 13-15
 # Project #1 - Growing Futures Hydroponic Monitoring System
 # https://rhok.ca/events/rhok-8/
@@ -8,12 +9,14 @@
 # Currently all our code is in one file for easy of updating. In the future
 # it would be nice to have this split over separate files.
 #
+##########################################################################
 # Requirements:
 # -python 3
 # -library: pySerial - http://pyserial.readthedocs.io
 # -library: InfluxDBClient - https://pypi.python.org/pypi/influxdb
 # -correct system time (for light's status)
 #
+##########################################################################
 # Usage:
 # Run the script. This can be used to change the configuration data and/or
 # loop on the sensor data.
@@ -21,6 +24,52 @@
 #
 # Used to skip the setup.
 # >>> python3 rhok.py --skip_setup
+#
+##########################################################################
+# Notes:
+# If a json dictionary key string is changed in the configuration file, the
+# string also needs to be changed in this file.
+#
+# Example configuration file entry:
+# "tags" : {
+#     "towerName" : "Tower_60",
+#     "towerGroup" : "Tower 60 Postal Office"
+# }
+#
+# If a string key name ("tags", "towerName", or "towerGroup") is changed in
+# the configuration file, its corresponding value in this file needs to be
+# updated.
+#
+# TAGS = 'tags'
+# T_TOWER_NAME = "towerName"
+# T_TOWER_GROUP = "towerGroup"
+#
+# If a value is changed (eg. from above: "Tower_60" or
+# "Tower 60 Postal Office"), that does not need to be reflected in this file.
+#
+##########################################################################
+# Example of the data format that is written to influxdb.
+# [{
+#       "measurement" : "TowerData",
+#
+#       "tags" : {
+#           "towerName" : "Tower_60",
+#           "towerGroup" : "Tower 60 Postal Office"
+#       },
+#
+#       "fields" : {
+#           "water_level" : 80.5,
+#           "air_humidity" : 44.4,
+#           "air_temp" : 25.2,
+#           "water_temp" : 22.9,
+#           "pH" : 7.0,
+#           "light_status_1" : 1.0,
+#           "light_status_2" : 1.0,
+#           "light_status_3" : 1.0,
+#           "light_status_4" : 1.0
+#       }
+# }]
+##########################################################################
 
 
 from datetime import datetime, time
@@ -35,6 +84,7 @@ import sys
 # This is our default config file. Don't write to this. Read only.
 DFLT_CONFIG_FILENAME = 'default_config.json'
 CONFIG_FILENAME = 'config.json'
+
 
 # Use this cmd on the raspberry pi to get the dev name of the arduino. There
 # will be a bunch of tty devices. It is usually something like ttyACM0
