@@ -98,7 +98,7 @@ def main():
     # be a bunch of tty devices. It is usually something like ttyACM0
     # or ttypUSB0. The last number is dependant on the usb port being used.
     # ls /dev/tty*
-    ser = serial.Serial('/dev/ttyACM1', 9600)
+    ser = serial.Serial('/dev/ttyUSB0', 9600)
     client = InfluxDBClient(host=hostName, port=hostPort, username='gfsensor',
             password='rhokmonitoring', ssl=True, verify_ssl=True)
     client.switch_database(dbname)
