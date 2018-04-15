@@ -225,8 +225,7 @@ def create_to_water_level(config_data):
 
     def to_water_level(sensor_value, height=height, wl_min=wl_min,
             wl_diff=wl_diff):
-        # For some reason we need to multiply by 10 and not 100.
-        return (height - to_float(sensor_value) - wl_min / wl_diff) * 10
+        return ((height - to_float(sensor_value) - wl_min) / wl_diff) * 100
     return to_water_level
 
 
