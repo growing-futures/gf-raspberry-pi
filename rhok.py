@@ -468,6 +468,10 @@ def sensor_loop():
             print('ERROR: Unable to write data to client db, data={}'.format(d))
 
 
-if '__main__' == __name__:
+def main():
     setup()
     sensor_loop()
+
+
+if '__main__' == __name__:
+    main()
