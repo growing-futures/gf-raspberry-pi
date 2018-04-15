@@ -35,12 +35,18 @@ LS_EXPECTED_START_ON_MIN = "expected_start_on_min"
 LS_EXPECTED_START_OFF_HOUR = "expected_start_off_hour"
 LS_EXPECTED_START_OFF_MIN = "expected_start_off_min"
 ARDUINO_LIGHT_ON = 1
+ARDUINO_INVALID_DATA = 'x'
+
+
+ARDUINO = 'arduino'
+SERIAL_PORT = '/dev/ttyACM1'
+#SERIAL_PORT = '/dev/ttyUSB0'
+BAUD_RATE = 'baud_rate'
 
 
 MEASUREMENT = 'measurement'
 TAGS = 'tags'
 DB = 'db'
-ARDUINO = 'arduino'
 CONFIG_KEYS = (MEASUREMENT, TAGS, DB, ARDUINO, WATER_LEVEL, LIGHT_SENSOR)
 
 
@@ -87,7 +93,6 @@ def create_to_light_status(config_data):
         else:
             if ARDUINO_LIGHT_ON == light_data: status = LightStatus.off_expected
             else: status =  LightStatus.on_expected
-
         return to_float(status.value)
     return to_light_status
 
@@ -137,7 +142,7 @@ def to_dict(config_data, field_dict, sensor_data):
         # if they only have 1 light. We filter out any that don't have data.
         convert_func = field_dict.get(field, to_str)
         data = sensor_data[e]
-        if 'x' == data: continue
+        if ARDUINO_INVALID_DATA == data: continue
         fields[field] = convert_func(data)
 
     d[FIELDS] = fields
@@ -157,18 +162,18 @@ def get_config_data(filename):
 
 
 def main():
+    # Read in the config data.
+    config_data = get_config_data(CONFIG_FILENAME)
+    print(config_data)
+
     # Use this cmd on the rpi to get the dev name of the arduino. There will
     # be a bunch of tty devices. It is usually something like ttyACM0
     # or ttypUSB0. The last number is dependant on the usb port being used.
     # ls /dev/tty*
-    ser = serial.Serial('/dev/ttyACM1', baud_rate)
+    ser = serial.Serial(SERIAL_PORT, config_data[ARDUINO][BAUD_RATE])
     client = InfluxDBClient(host=host_name, port=host_port, username='gfsensor',
             password='rhokmonitoring', ssl=True, verify_ssl=True)
     client.switch_database(dbname)
-
-    # Read in the config data.
-    config_data = get_config_data(CONFIG_FILENAME)
-    print(config_data)
 
     field_dict = {
             F_WATER_LEVEL : create_to_water_level(config_data),
