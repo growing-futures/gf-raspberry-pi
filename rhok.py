@@ -175,7 +175,7 @@ def to_float(s):
     try:
         return float(s)
     except ValueError:
-        # TODO - not sure what to do here, maybe just re-raise the exception.
+        # Re-raise the exception, to be caught by users of this function.
         raise e
 
 
@@ -183,7 +183,7 @@ def to_int(s):
     try:
         return int(s)
     except ValueError:
-        # TODO - not sure what to do here, maybe just re-raise the exception.
+        # Re-raise the exception, to be caught by users of this function.
         raise e
 
 
@@ -211,7 +211,7 @@ def create_to_light_status(config_data):
                 status = LightStatus.off_expected
             else:
                 status =  LightStatus.on_expected
-        return to_float(status.value)
+        return float(status.value)
     return to_light_status
 
 
@@ -253,7 +253,8 @@ def to_dict(config_data, field_dict, sensor_data):
         try:
             fields[field] = convert_func(data)
         except ValueError as e:
-            # Skip this field/data.
+            # Skip this field/data. This is most likely caused by a sensor
+            # value not being as expected (ie. to_int or to_float)
             print('Exception: {}'.format(e))
             continue
 
@@ -423,8 +424,6 @@ def setup():
     help_str = "Input new value or press 'enter' to keep current value."
 
     # TODO - have a way to allow the user to revert to the dflt config file.
-    # TODO - validate hour/min values
-    # TODO - hint to user that hour values are 24h
     changed_config = {}
 
     for key in SETUP_KEYS:
