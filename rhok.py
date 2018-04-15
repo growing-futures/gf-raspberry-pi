@@ -7,6 +7,13 @@
 #
 # Currently all our code is in one file for easy of updating. In the future
 # it would be nice to have this split over separate files.
+#
+# Requirements:
+# -python 3
+# -library: pySerial - http://pyserial.readthedocs.io
+# -library: InfluxDBClient - https://pypi.python.org/pypi/influxdb
+# -correct system time (for light's status)
+#
 
 
 from datetime import datetime, time
