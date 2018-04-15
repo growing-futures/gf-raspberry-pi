@@ -1,6 +1,5 @@
 from datetime import datetime, time
 from enum import Enum, unique
-#import logging  # TODO
 from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError
 import json
@@ -10,12 +9,71 @@ import time
 
 CONFIG_FILENAME = 'config.json'
 
+# Use this cmd on the raspberry pi to get the dev name of the arduino. There
+# will be a bunch of tty devices. It is usually something like ttyACM0
+# or ttypUSB0. The last number is dependant on the usb port being used.
+# >>> ls /dev/tty*
+SERIAL_PORT = '/dev/ttyACM1'
+#SERIAL_PORT = '/dev/ttyACM0'
+#SERIAL_PORT = '/dev/ttyUSB0'
+
+
+# Most of the following consts are based on the strings in the config.json
+# file.
+MEASUREMENT = 'measurement'
+
+
+TAGS = 'tags'
+T_TOWER_NAME = "towerName"
+T_TOWER_GROUP = "towerGroup"
+
+TAGS_ORDER = (
+        T_TOWER_NAME,
+        T_TOWER_GROUP,
+)
+
 
 DB = 'db'
 DB_HOST_NAME = "host_name"
 DB_HOST_PORT = "host_port"
 DB_DBNAME = "dbname"
 DB_USERNAME = "username"
+
+DB_ORDER = (
+        DB_HOST_NAME,
+        DB_HOST_PORT,
+        DB_DBNAME,
+        DB_USERNAME,
+)
+
+
+ARDUINO = 'arduino'
+A_BAUD_RATE = 'baud_rate'
+
+
+WATER_LEVEL = 'water_level'
+WL_SENSOR_HEIGHT = "sensor_height"
+WL_MAX = "max_water_level"
+WL_MIN = "min_water_level"
+
+WATER_LEVEL_ORDER = (
+        WL_SENSOR_HEIGHT,
+        WL_MAX,
+        WL_MIN,
+)
+
+LIGHT_SENSOR = 'light_sensor'
+LS_EXPECTED_START_ON_HOUR = 'expected_start_on_hour'
+LS_EXPECTED_START_ON_MIN = "expected_start_on_min"
+LS_EXPECTED_START_OFF_HOUR = "expected_start_off_hour"
+LS_EXPECTED_START_OFF_MIN = "expected_start_off_min"
+
+# Used with the light sensor code.
+ARDUINO_LIGHT_ON = 1
+ARDUINO_INVALID_DATA = 'x'
+
+
+CONFIG_KEYS = (MEASUREMENT, TAGS, DB, ARDUINO, WATER_LEVEL, LIGHT_SENSOR)
 
 
 FIELDS = 'fields'
@@ -28,33 +86,6 @@ F_LIGHT_STATUS_1 = "light_status_1"
 F_LIGHT_STATUS_2 = "light_status_2"
 F_LIGHT_STATUS_3 = "light_status_3"
 F_LIGHT_STATUS_4 = "light_status_4"
-
-
-WATER_LEVEL = 'water_level'
-WL_SENSOR_HEIGHT = "sensor_height"
-WL_MAX = "max_water_level"
-WL_MIN = "min_water_level"
-
-
-LIGHT_SENSOR = 'light_sensor'
-LS_EXPECTED_START_ON_HOUR = 'expected_start_on_hour'
-LS_EXPECTED_START_ON_MIN = "expected_start_on_min"
-LS_EXPECTED_START_OFF_HOUR = "expected_start_off_hour"
-LS_EXPECTED_START_OFF_MIN = "expected_start_off_min"
-ARDUINO_LIGHT_ON = 1
-ARDUINO_INVALID_DATA = 'x'
-
-
-ARDUINO = 'arduino'
-SERIAL_PORT = '/dev/ttyACM1'
-#SERIAL_PORT = '/dev/ttyACM0'
-#SERIAL_PORT = '/dev/ttyUSB0'
-BAUD_RATE = 'baud_rate'
-
-
-MEASUREMENT = 'measurement'
-TAGS = 'tags'
-CONFIG_KEYS = (MEASUREMENT, TAGS, DB, ARDUINO, WATER_LEVEL, LIGHT_SENSOR)
 
 
 # Required as the arduino sends us the data in this order.
@@ -96,6 +127,7 @@ def to_float(s):
     except ValueError:
         # TODO - not sure what to do here, maybe just re-raise the exception.
         raise e
+
 
 def to_int(s):
     try:
@@ -181,9 +213,12 @@ def to_dict(config_data, field_dict, sensor_data):
 
 def get_config_data(filename):
     """Used to read the json config data."""
-    # TODO - check if file exists.
-    with open(filename) as fp:
-        config_data = json.load(fp)
+    try:
+        with open(filename) as fp:
+            config_data = json.load(fp)
+    except OSError as e:
+        #print('Exception: {}'.format(e))
+        return {}
 
     # Do some basic checking.
     for key in CONFIG_KEYS:
@@ -196,13 +231,11 @@ def main():
     # Read in the config data.
     config_data = get_config_data(CONFIG_FILENAME)
     print(config_data)
+    if not config_data:
+        print('ERROR: Unable to read config file: {}'.format(CONFIG_FILENAME))
 
-    # Use this cmd on the rpi to get the dev name of the arduino. There will
-    # be a bunch of tty devices. It is usually something like ttyACM0
-    # or ttypUSB0. The last number is dependant on the usb port being used.
-    # ls /dev/tty*
     try:
-        ser = serial.Serial(SERIAL_PORT, config_data[ARDUINO][BAUD_RATE])
+        ser = serial.Serial(SERIAL_PORT, config_data[ARDUINO][A_BAUD_RATE])
     except serial.SerialException as e:
         # TODO
         print('Exception: {}'.format(e))

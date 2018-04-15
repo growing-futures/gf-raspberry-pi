@@ -1,6 +1,4 @@
 {
-    "NOTE1" : "Field order is how they are passed from the arduino.",
-
     "measurement" : "TowerData",
 
     "tags" : {
