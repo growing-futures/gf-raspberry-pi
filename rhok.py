@@ -30,7 +30,6 @@ from influxdb.exceptions import InfluxDBClientError
 import json
 import serial  # For communication with arduino.
 import sys
-import time
 
 
 # This is our default config file. Don't write to this. Read only.
