@@ -94,8 +94,15 @@ def to_float(s):
     try:
         return float(s)
     except ValueError:
-        # TODO
-        return s
+        # TODO - not sure what to do here, maybe just re-raise the exception.
+        raise e
+
+def to_int(s):
+    try:
+        return int(s)
+    except ValueError:
+        # TODO - not sure what to do here, maybe just re-raise the exception.
+        raise e
 
 
 def to_str(s): return s
@@ -108,14 +115,20 @@ def create_to_light_status(config_data):
     end_time = time(ls_config[LS_EXPECTED_START_OFF_HOUR],
             ls_config[LS_EXPECTED_START_OFF_MIN], 0)
 
-    def to_light_status(sensor_value, start_time=start_time, end_time=end_time):
+    def to_light_status(sensor_value, start_time=start_time,
+            end_time=end_time):
         """Used to convert light sensor data to light status."""
+        sensor_value = to_int(sensor_value)
         if time_in_range(start_time, end_time, datetime.time(datetime.now())):
-            if ARDUINO_LIGHT_ON == light_data: status = LightStatus.on
-            else: status =  LightStatus.off
+            if ARDUINO_LIGHT_ON == sensor_value:
+                status = LightStatus.on
+            else:
+                status =  LightStatus.off
         else:
-            if ARDUINO_LIGHT_ON == light_data: status = LightStatus.off_expected
-            else: status =  LightStatus.on_expected
+            if ARDUINO_LIGHT_ON == sensor_value:
+                status = LightStatus.off_expected
+            else:
+                status =  LightStatus.on_expected
         return to_float(status.value)
     return to_light_status
 
@@ -123,10 +136,14 @@ def create_to_light_status(config_data):
 def create_to_water_level(config_data):
     """Used to create the 'to_water_level' func."""
     wl_config = config_data[WATER_LEVEL]
-    def to_water_level(sensor_value, height=wl_config[WL_SENSOR_HEIGHT],
-            wl_max=wl_config[WL_MAX], wl_min=wl_config[WL_MIN]):
-        sensor_value = to_float(sensor_value)
-        return (height - sensor_value - wl_min / (wl_max - wl_min)) * 100
+    height = wl_config[WL_SENSOR_HEIGHT]
+    wl_max = wl_config[WL_MAX]
+    wl_min = wl_config[WL_MIN]
+    wl_diff = wl_max - wl_min
+
+    def to_water_level(sensor_value, height=height, wl_min=wl_min,
+            wl_diff=wl_diff):
+        return (height - to_float(sensor_value) - wl_min / wl_diff) * 100
     return to_water_level
 
 
@@ -150,7 +167,13 @@ def to_dict(config_data, field_dict, sensor_data):
         convert_func = field_dict.get(field, to_str)
         data = sensor_data[e]
         if ARDUINO_INVALID_DATA == data: continue
-        fields[field] = convert_func(data)
+
+        try:
+            fields[field] = convert_func(data)
+        except ValueError as e:
+            # Skip this field/data.
+            print('Exception: {}'.format(e))
+            continue
 
     d[FIELDS] = fields
     return d
@@ -158,6 +181,7 @@ def to_dict(config_data, field_dict, sensor_data):
 
 def get_config_data(filename):
     """Used to read the json config data."""
+    # TODO - check if file exists.
     with open(filename) as fp:
         config_data = json.load(fp)
 
