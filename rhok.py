@@ -107,6 +107,12 @@ LIGHT_SENSOR_ORDER = (
 ARDUINO_LIGHT_ON = 1
 ARDUINO_INVALID_DATA = 'x'
 
+# Used to validate light sensor hour/minute values.
+MIN_HOUR = 0
+MAX_HOUR = 23
+MIN_MINUTE = 0
+MAX_MINUTE = 59
+
 
 CONFIG_KEYS = (MEASUREMENT, TAGS, DB, ARDUINO, WATER_LEVEL, LIGHT_SENSOR)
 SETUP_KEYS = (TAGS, DB, WATER_LEVEL, LIGHT_SENSOR)
@@ -340,7 +346,27 @@ def config_db_client(config_data):
 #
 # Functions to manage setup.
 #
-def validate_cmd_data(cmd_line_input, data):
+#
+def is_value_in_range(value, min_v, max_v):
+    """Checks value in range [min_v, max_v]."""
+    return min_v <= value <= max_v
+
+
+def check_hour_value(value):
+    if not is_value_in_range(value, MIN_HOUR, MAX_HOUR):
+        print('Invalid hour (range: {}-{})'.format(MIN_HOUR, MAX_HOUR))
+        return False
+    return True
+
+
+def check_minute_value(value):
+    if not is_value_in_range(value, MIN_MINUTE, MAX_MINUTE):
+        print('Invalid minute (range: {}-{})'.format(MIN_MINUTE, MAX_MINUTE))
+        return False
+    return True
+
+
+def validate_cmd_data(cmd_line_input, data, data_key):
     expected_data_type = type(data)
     value = None
     cmd_line_input = cmd_line_input.strip()
@@ -353,6 +379,16 @@ def validate_cmd_data(cmd_line_input, data):
                 # Try again.
                 print('Invalid input (hint: {})'.format(
                     expected_data_type.__name__))
+
+            if value is not None:
+                # Do some extra validation on some of the data. If the check
+                # fails set the value to None and try again.
+                if (LS_EXPECTED_START_ON_HOUR == data_key or
+                        LS_EXPECTED_START_OFF_HOUR == data_key):
+                    if not check_hour_value(value): value = None
+                if (LS_EXPECTED_START_ON_MIN == data_key or
+                        LS_EXPECTED_START_OFF_MIN == data_key):
+                    if not check_minute_value(value): value = None
         else:
             value = cmd_line_input
     else:
@@ -382,8 +418,8 @@ def setup():
     """Function to assist the user in configuring a device."""
     config_data = get_config_data(CONFIG_FILENAME)
     #print(config_data)
-    cmd_line = "Update configuration data for '{}' entries (y/Y):"
-    cmd_data_line = "'{}' = {}: "
+    prompt = "Update configuration data for '{}' entries (y/Y): "
+    data_prompt = "'{}' = {}: "
     help_str = "Input new value or press 'enter' to keep current value."
 
     # TODO - have a way to allow the user to revert to the dflt config file.
@@ -393,7 +429,7 @@ def setup():
 
     for key in SETUP_KEYS:
         print()
-        cmd_line_input = input(cmd_line.format(key))
+        cmd_line_input = input(prompt.format(key))
 
         if is_yes_reply(cmd_line_input):
             for data_key in SETUP_KEYS_ORDER_DICT[key]:
@@ -403,7 +439,8 @@ def setup():
 
                 while value is None:
                     value = validate_cmd_data(
-                            input(cmd_data_line.format(data_key, data)), data)
+                            input(data_prompt.format(data_key, data)), data,
+                            data_key)
 
                 # Only update if it has changed.
                 if value != data:
