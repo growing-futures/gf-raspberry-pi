@@ -1,0 +1,26 @@
+{
+    "NOTE1" : "Field order is how they are passed from the arduino.",
+
+    "measurement" : "TowerData",
+
+    "tags" : {
+        "towerName" : "60",
+        "towerGroup" : "Tower 60 Postal Office"
+    },
+
+    "db" : {
+        "host_name" : "growingfuturesapp.ca",
+        "host_port" : 8086,
+        "dbname" : "gf"
+    },
+
+    "arduino" : {
+        "baudrate" : 9600
+    },
+
+    "water_level" : {
+        "sensor_height" : 2.0,
+        "max_water_level" : 1.0,
+        "min_water_level" : 0.0
+    }
+}
