@@ -170,10 +170,23 @@ def main():
     # be a bunch of tty devices. It is usually something like ttyACM0
     # or ttypUSB0. The last number is dependant on the usb port being used.
     # ls /dev/tty*
-    ser = serial.Serial(SERIAL_PORT, config_data[ARDUINO][BAUD_RATE])
-    client = InfluxDBClient(host=host_name, port=host_port, username='gfsensor',
-            password='rhokmonitoring', ssl=True, verify_ssl=True)
-    client.switch_database(dbname)
+    try:
+        ser = serial.Serial(SERIAL_PORT, config_data[ARDUINO][BAUD_RATE])
+    except serial.SerialException as e:
+        # TODO
+        print('Exception: {}'.format(e))
+        return
+
+    try:
+        # TODO - remove password
+        client = InfluxDBClient(host=host_name, port=host_port,
+                username='gfsensor', password='rhokmonitoring', ssl=True,
+                verify_ssl=True)
+        client.switch_database(dbname)
+    except InfluxDBClientError as e:
+        # TODO
+        print('Exception: {}'.format(e))
+        return
 
     field_dict = {
             F_WATER_LEVEL : create_to_water_level(config_data),
@@ -208,10 +221,6 @@ def main():
                     len(sensor_data), sensor_fields_len))
             continue
 
-        # Add timestamp.
-        # TODO
-        #logger.info(sensor_data)
-
         # Output to json.
         d = [to_dict(config_data, field_dict, sensor_data)]
         print(json.dumps(d))
@@ -220,6 +229,7 @@ def main():
             if not client.write_points(d):
                 print('Failed client data write: {}'.format(d))
         except InfluxDBClientError as e:
+            # TODO
             print('Exception: {}'.format(e))
 
 
