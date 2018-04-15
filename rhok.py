@@ -225,7 +225,8 @@ def create_to_water_level(config_data):
 
     def to_water_level(sensor_value, height=height, wl_min=wl_min,
             wl_diff=wl_diff):
-        return (height - to_float(sensor_value) - wl_min / wl_diff) * 100
+        # For some reason we need to multiply by 10 and not 100.
+        return (height - to_float(sensor_value) - wl_min / wl_diff) * 10
     return to_water_level
 
 
@@ -310,10 +311,10 @@ def create_sensor_field_dict(config_data):
             F_AIR_TEMP : to_float,
             F_WATER_TEMP : to_float,
             F_PH : to_float,
-            F_LIGHT_STATUS_1 : create_to_water_level(config_data),
-            F_LIGHT_STATUS_2 : create_to_water_level(config_data),
-            F_LIGHT_STATUS_3 : create_to_water_level(config_data),
-            F_LIGHT_STATUS_4 : create_to_water_level(config_data),
+            F_LIGHT_STATUS_1 : create_to_light_status(config_data),
+            F_LIGHT_STATUS_2 : create_to_light_status(config_data),
+            F_LIGHT_STATUS_3 : create_to_light_status(config_data),
+            F_LIGHT_STATUS_4 : create_to_light_status(config_data),
     }
 
 

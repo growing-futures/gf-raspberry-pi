@@ -2,7 +2,7 @@
     "measurement" : "TowerData",
 
     "tags" : {
-        "towerName" : "60",
+        "towerName" : "Tower_60",
         "towerGroup" : "Tower 60 Postal Office"
     },
 
@@ -18,9 +18,9 @@
     },
 
     "water_level" : {
-        "sensor_height" : 2.0,
-        "max_water_level" : 1.0,
-        "min_water_level" : 0.0
+        "sensor_height" : 34.0,
+        "max_water_level" : 26.0,
+        "min_water_level" : 12.0
     },
 
     "light_sensor" : {
