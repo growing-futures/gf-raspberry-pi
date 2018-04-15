@@ -15,7 +15,7 @@
     },
 
     "arduino" : {
-        "baudrate" : 9600
+        "baud_rate" : 9600
     },
 
     "water_level" : {
